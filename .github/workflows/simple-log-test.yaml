@@ -14,3 +14,12 @@ jobs:
 
     - name: Print a log message
       run: echo "GitHub Actions triggered successfully!"
+
+    - name: Print multiple log messages
+      run: |
+        echo "GitHub Actions triggered successfully!"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Repository: ${{ github.repository }}"
+        echo "Actor: ${{ github.actor }}"
+        echo "Workflow is running on Ubuntu"
+

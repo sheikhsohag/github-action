@@ -20,6 +20,7 @@ RUN composer install \
 FROM php:8.4-fpm-alpine
 
 # Install system dependencies
+# Note: mysql-client in Alpine is often part of mariadb-client
 RUN apk add --no-cache \
     bash \
     git \
@@ -28,7 +29,7 @@ RUN apk add --no-cache \
     libzip-dev \
     oniguruma-dev \
     icu-dev \
-    mysql-client \
+    mariadb-client \
     zip \
     unzip \
     $PHPIZE_DEPS \
@@ -41,6 +42,7 @@ RUN apk add --no-cache \
         zip \
     && pecl install redis \
     && docker-php-ext-enable redis \
+    && apk del $PHPIZE_DEPS \
     && rm -rf /tmp/*
 
 # Set working directory
@@ -52,9 +54,10 @@ COPY . .
 # Copy vendor from builder stage
 COPY --from=vendor /app/vendor ./vendor
 
-# Permissions
+# Set permissions for Laravel
+# We do this as root before switching to www-data
 RUN chown -R www-data:www-data /var/www \
-    && chmod -R 755 /var/www/storage /var/www/bootstrap/cache
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 USER www-data
 

@@ -25,6 +25,7 @@ RUN apk add --no-cache \
     bash \
     git \
     curl \
+    sqlite sqlite-dev \
     libpng-dev \
     libzip-dev \
     oniguruma-dev \
@@ -35,6 +36,7 @@ RUN apk add --no-cache \
     $PHPIZE_DEPS \
     && docker-php-ext-install \
         pdo_mysql \
+        pdo_sqlite \
         mbstring \
         bcmath \
         intl \
@@ -44,6 +46,7 @@ RUN apk add --no-cache \
     && docker-php-ext-enable redis \
     && apk del $PHPIZE_DEPS \
     && rm -rf /tmp/*
+
 
 # Set working directory
 WORKDIR /var/www

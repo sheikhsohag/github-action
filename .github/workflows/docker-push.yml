@@ -23,7 +23,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # 3. Build & Push Docker image
-      - name: Build & Push Docker image
+      - name: Build & Push Docker  image
         run: |
           IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/laravel-app
           TAG=${GITHUB_SHA::7}

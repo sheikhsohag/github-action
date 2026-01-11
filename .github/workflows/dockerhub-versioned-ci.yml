@@ -1,0 +1,103 @@
+name: Laravel Docker Versioned CI
+
+on:
+  push:
+    branches: ["main"]
+
+# -----------------------------
+# Jobs Definition
+# -----------------------------
+jobs:
+
+  # 1️⃣ Build Docker Image
+  build:
+    runs-on: self-hosted
+
+    env:
+      IMAGE_NAME: sheikhsohag/laravel-app
+      IMAGE_TAG: v${{ github.run_number }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show image version info
+        run: |
+          echo "Image Name: $IMAGE_NAME"
+          echo "Image Tag: $IMAGE_TAG"
+
+      - name: Build Docker image with version tag
+        run: |
+          docker build -t $IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:latest .
+
+      - name: Verify built image
+        run: docker images | grep $IMAGE_NAME
+
+  # 2️⃣ Run Laravel Tests (depends on build)
+  test:
+    runs-on: self-hosted
+    needs: build  # <-- depends on build job
+
+    env:
+      IMAGE_NAME: sheikhsohag/laravel-app
+      IMAGE_TAG: v${{ github.run_number }}
+
+    steps:
+      - name: Run tests using built Docker image
+        run: |
+          docker run --rm $IMAGE_NAME:$IMAGE_TAG php artisan test
+
+  # 3️⃣ Push Docker Image to Docker Hub (depends on test)
+  push:
+    runs-on: self-hosted
+    needs: test  # <-- depends on test job
+
+    env:
+      IMAGE_NAME: sheikhsohag/laravel-app
+      IMAGE_TAG: v${{ github.run_number }}
+
+    steps:
+      - name: Docker Hub login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push Docker images
+        run: |
+          docker push $IMAGE_NAME:$IMAGE_TAG
+          docker push $IMAGE_NAME:latest
+
+      - name: Remove local images to force pull
+        run: |
+          docker rmi $IMAGE_NAME:$IMAGE_TAG
+          docker rmi $IMAGE_NAME:latest || true
+
+  # 4️⃣ Pull and Test Docker Image (depends on push)
+  pull-and-test:
+    runs-on: self-hosted
+    needs: push  # <-- depends on push job
+
+    env:
+      IMAGE_NAME: sheikhsohag/laravel-app
+      IMAGE_TAG: v${{ github.run_number }}
+
+    steps:
+      - name: Pull versioned image from Docker Hub
+        run: docker pull $IMAGE_NAME:$IMAGE_TAG
+
+      - name: Test pulled image
+        run: docker run --rm $IMAGE_NAME:$IMAGE_TAG php artisan --version
+
+  # 5️⃣ Optional: Docker Compose Up (depends on pull-and-test)
+  docker-compose-up:
+    runs-on: self-hosted
+    needs: pull-and-test  # <-- depends on pull-and-test
+
+    steps:
+      - name: Start containers using Docker Compose
+        run: docker compose -f docker-compose.ci.yml up --abort-on-container-exit
+
+      - name: Cleanup after run
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down

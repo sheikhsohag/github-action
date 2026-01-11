@@ -2,7 +2,7 @@ name: Laravel Docker Versioned CI
 
 on:
   push:
-    branches: ["main"]
+    branches: ["master"]
 
 # -----------------------------
 # Jobs Definition

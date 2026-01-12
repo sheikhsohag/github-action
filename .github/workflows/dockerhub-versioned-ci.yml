@@ -24,9 +24,14 @@ jobs:
           echo "Image Tag: $IMAGE_TAG"
 
       # Build image from project folder
+      # Build image from project root context
       - name: Build Docker image
         run: |
-          docker build -t $IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:latest ./gitActionLaravelProject
+          docker build \
+            -t $IMAGE_NAME:$IMAGE_TAG \
+            -t $IMAGE_NAME:latest \
+            -f ./gitActionLaravelProject/docker/php/Dockerfile \
+            ./gitActionLaravelProject
 
       - name: Verify built image
         run: docker images | grep $IMAGE_NAME

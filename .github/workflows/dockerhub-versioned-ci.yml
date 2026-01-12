@@ -25,7 +25,7 @@ jobs:
       # Build image from project folder
       - name: Build Docker image
         run: |
-          docker build -t $IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:latest ./docker/php
+          docker build -t $IMAGE_NAME:$IMAGE_TAG -t $IMAGE_NAME:latest ./docker/php/Dockerfile
 
       - name: Verify built image
         run: docker images | grep $IMAGE_NAME

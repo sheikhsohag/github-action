@@ -3,12 +3,11 @@ name: Laravel Docker Versioned CI
 on:
   push:
     branches: ["master"]
+
 jobs:
-
-  # 1️⃣ Build Docker Image
-  build:
+  # 1️⃣ Build and Push Docker Image
+  build-and-push:
     runs-on: self-hosted
-
     env:
       IMAGE_NAME: sheikhsohag/laravel-app
       IMAGE_TAG: v${{ github.run_number }}
@@ -17,87 +16,50 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Show image version info
-        run: |
-          echo "Image Name: $IMAGE_NAME"
-          echo "Image Tag: $IMAGE_TAG"
-
-      # Build image from project folder
-      - name: Build Docker image
-        run: |
-          docker build \
-            -t $IMAGE_NAME:$IMAGE_TAG \
-            -t $IMAGE_NAME:latest \
-            -f ./gitActionLaravelProject/docker/php/Dockerfile \
-            ./gitActionLaravelProject
-
-      - name: Verify built image
-        run: docker images | grep $IMAGE_NAME
-
-  # 2️⃣ Run Laravel Tests (depends on build)
-  test:
-    runs-on: self-hosted
-    needs: build
-    env:
-      IMAGE_NAME: sheikhsohag/laravel-app
-      IMAGE_TAG: v${{ github.run_number }}
-
-    steps:
-      - name: Run Laravel tests
-        run: |
-          docker run --rm $IMAGE_NAME:$IMAGE_TAG php artisan test
-
-  # 3️⃣ Push Docker Image to Docker Hub (depends on test)
-  push:
-    runs-on: self-hosted
-    needs: test
-    env:
-      IMAGE_NAME: sheikhsohag/laravel-app
-      IMAGE_TAG: v${{ github.run_number }}
-
-    steps:
+      # ডকার হাব লগইন
       - name: Docker Hub login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # ইমেজ বিল্ড করা
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t $IMAGE_NAME:$IMAGE_TAG \
+            -t $IMAGE_NAME:latest \
+            -f ./docker/php/Dockerfile .
+
+      # ইমেজ পুশ করা (Versioned tag and Latest tag)
       - name: Push Docker images
         run: |
           docker push $IMAGE_NAME:$IMAGE_TAG
           docker push $IMAGE_NAME:latest
 
-      - name: Remove local images to force pull
-        run: |
-          docker rmi $IMAGE_NAME:$IMAGE_TAG
-          docker rmi $IMAGE_NAME:latest || true
-
-  # 4️⃣ Pull and Test Docker Image (depends on push)
-  pull-and-test:
+  # 2️⃣ Deploy (Pull and Run)
+  deploy:
     runs-on: self-hosted
-    needs: push
+    needs: build-and-push
     env:
       IMAGE_NAME: sheikhsohag/laravel-app
-      IMAGE_TAG: v${{ github.run_number }}
-
     steps:
-      - name: Pull versioned image
-        run: docker pull $IMAGE_NAME:$IMAGE_TAG
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Test pulled image
-        run: docker run --rm $IMAGE_NAME:$IMAGE_TAG php artisan --version
+      # ডকার হাব থেকে নতুন ইমেজ পুল করা
+      - name: Pull latest image
+        run: docker pull $IMAGE_NAME:latest
 
-  # 5️⃣ Optional: Docker Compose Up (depends on pull-and-test)
-  docker-compose-up:
-    runs-on: self-hosted
-    needs: pull-and-test
-
-    steps:
-      - name: Start containers using Docker Compose
+      # কন্টেইনার চালানো (Docker Compose ব্যবহার করলে)
+      - name: Start Production Containers
         run: |
-          docker compose -f ./gitActionLaravelProject/docker-compose.prod.yml up --abort-on-container-exit
+          # যদি আপনার docker-compose.prod.yml থাকে
+          docker compose -f docker-compose.prod.yml up -d
+          
+          # অথবা যদি আপনি সরাসরি ডকার রান করতে চান (বিকল্প)
+          # docker run -d --name my-laravel-app -p 80:80 $IMAGE_NAME:latest
 
-      - name: Cleanup after run
-        if: always()
-        run: |
-          docker compose -f ./gitActionLaravelProject/docker-compose.prod.yml down
+      # অব্যবহৃত পুরনো ইমেজ মুছে ফেলা
+      - name: Cleanup Old Images
+        run: docker image prune -f

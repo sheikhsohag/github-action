@@ -3,7 +3,6 @@ name: Laravel Docker Versioned CI
 on:
   push:
     branches: ["master"]
-
 jobs:
 
   # 1️⃣ Build Docker Image

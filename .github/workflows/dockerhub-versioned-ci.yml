@@ -5,7 +5,6 @@ on:
     branches: ["master"]
 
 jobs:
-  # 1️⃣ Build and Push Docker Image
   build-and-push:
     runs-on: self-hosted
     env:
@@ -16,14 +15,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ডকার হাব লগইন
       - name: Docker Hub login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # ইমেজ বিল্ড করা
       - name: Build Docker image
         run: |
           docker build \
@@ -31,13 +28,11 @@ jobs:
             -t $IMAGE_NAME:latest \
             -f ./docker/php/Dockerfile .
 
-      # ইমেজ পুশ করা (Versioned tag and Latest tag)
       - name: Push Docker images
         run: |
           docker push $IMAGE_NAME:$IMAGE_TAG
           docker push $IMAGE_NAME:latest
 
-  # 2️⃣ Deploy (Pull and Run)
   deploy:
     runs-on: self-hosted
     needs: build-and-push
@@ -47,19 +42,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ডকার হাব থেকে নতুন ইমেজ পুল করা
+      # ১. এনভায়রনমেন্ট ফাইল তৈরি করা (Secrets থেকে)
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.PROD_ENV_FILE }}" > .env
+
+      # ২. লেটেস্ট ইমেজ পুল করা
       - name: Pull latest image
         run: docker pull $IMAGE_NAME:latest
 
-      # কন্টেইনার চালানো (Docker Compose ব্যবহার করলে)
+      # ৩. কন্টেইনার চালানো
       - name: Start Production Containers
         run: |
-          # যদি আপনার docker-compose.prod.yml থাকে
-          docker compose -f docker-compose.prod.yml up -d
-          
-          # অথবা যদি আপনি সরাসরি ডকার রান করতে চান (বিকল্প)
-          # docker run -d --name my-laravel-app -p 80:80 $IMAGE_NAME:latest
+          # --env-file .env ফ্ল্যাগটি নিশ্চিত করে যে ভেরিয়েবলগুলো পাওয়া যাচ্ছে
+          docker compose -f docker-compose.prod.yml --env-file .env up -d
 
-      # অব্যবহৃত পুরনো ইমেজ মুছে ফেলা
+      # ৪. ক্লিনআপ
       - name: Cleanup Old Images
         run: docker image prune -f

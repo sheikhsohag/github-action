@@ -1,65 +1,38 @@
-############################################
-# Stage 1: Composer Dependencies
-############################################
-FROM composer:2 AS vendor
-
-WORKDIR /app
-
-COPY composer.json composer.lock ./
-RUN composer install \
-    --no-dev \
-    --prefer-dist \
-    --no-scripts \
-    --no-interaction \
-    --optimize-autoloader
-
-############################################
-# Stage 2: PHP-FPM Runtime
-############################################
-FROM php:8.4-fpm-alpine
+FROM php:8.3-fpm
 
 # Install system dependencies
-RUN apk add --no-cache \
-    bash \
+RUN apt-get update && apt-get install -y \
     git \
     curl \
-    sqlite sqlite-dev \
     libpng-dev \
-    libzip-dev \
-    oniguruma-dev \
-    icu-dev \
-    mariadb-client \
+    libonig-dev \
+    libxml2-dev \
     zip \
     unzip \
-    $PHPIZE_DEPS \
-    && docker-php-ext-install \
-        pdo_mysql \
-        pdo_sqlite \
-        mbstring \
-        bcmath \
-        intl \
-        gd \
-        zip \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
-    && apk del $PHPIZE_DEPS \
-    && rm -rf /tmp/*
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www
 
-# Copy app source
+# Copy existing application directory contents
 COPY . .
 
-# Copy vendor from builder stage
-COPY --from=vendor /app/vendor ./vendor
+# Copy existing application directory permissions (optional)
+# COPY --chown=www-data:www-data . /var/www/
 
-# 🔹 Set permissions only for folders Laravel needs to write
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+# Install PHP dependencies
+RUN composer install --optimize-autoloader --no-dev
+
+# Set correct permissions
+RUN chown -R www-data:www-data /var/www \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Switch to www-data user
-USER www-data
-
+# Expose port 9000
 EXPOSE 9000
+
 CMD ["php-fpm"]

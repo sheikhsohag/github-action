@@ -9,9 +9,17 @@ services:
     env_file:
       - .env
     volumes:
+    volumes:
       - ./storage:/var/www/storage
-      - .:/var/www
+      # Mount specific directories, not everything
+      - ./app:/var/www/app
+      - ./routes:/var/www/routes
+      - ./config:/var/www/config
+      - ./resources:/var/www/resources
+      - ./tests:/var/www/tests
+      - ./database:/var/www/database
       - ./public:/var/www/public
+      - ./bootstrap/app.php:/var/www/bootstrap/app.php
 
     depends_on:
       mysql:

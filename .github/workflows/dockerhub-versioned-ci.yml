@@ -12,6 +12,10 @@ jobs:
       IMAGE_TAG: v${{ github.run_number }}
 
     steps:
+      - name: Pre-cleanup for Checkout
+        # হোস্ট মেশিনের ফাইল পারমিশন ইস্যু ঠিক করার জন্য এটি দরকার
+        run: sudo chown -R $USER:$USER . && sudo chmod -R 775 . || true
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -39,6 +43,9 @@ jobs:
     env:
       IMAGE_NAME: sheikhsohag/laravel-app
     steps:
+      - name: Pre-cleanup for Checkout
+        run: sudo chown -R $USER:$USER . && sudo chmod -R 775 . || true
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -51,23 +58,17 @@ jobs:
 
       - name: Start Production Containers
         run: |
-          # কন্টেইনার আগে স্টার্ট করতে হবে যাতে পরবর্তীতে exec কমান্ড কাজ করে
           docker compose -f docker-compose.prod.yml --env-file .env up -d
 
       - name: Set Permissions
         run: |
-          # কন্টেইনার স্টার্ট হওয়ার পর রুট ইউজার দিয়ে পারমিশন ঠিক করা
+          # কন্টেইনারের ভেতরে পারমিশন ঠিক করা
           docker exec -u root laravel_app chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
           docker exec -u root laravel_app chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
       - name: Run Laravel Migrations
         run: |
           docker exec laravel_app php artisan migrate --force
-
-      - name: Clear View Cache
-        run: |
-          # পারমিশন এরর এড়াতে ভিউ ক্যাশ ক্লিয়ার করে দেওয়া ভালো
-          docker exec laravel_app php artisan view:clear
 
       - name: Cleanup Old Images
         run: docker image prune -f

@@ -10,6 +10,8 @@ services:
       - .env
     volumes:
       - ./storage:/var/www/storage
+      # প্রোডাকশনে না থাকলে নিচের লাইনটি কোড সিঙ্ক করার জন্য যোগ করতে পারেন
+      # - .:/var/www
     depends_on:
       mysql:
         condition: service_healthy
@@ -27,6 +29,7 @@ services:
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./storage:/var/www/storage
+      - .:/var/www
     depends_on:
       - app
     networks:
@@ -36,8 +39,6 @@ services:
     image: mysql:8.0
     container_name: laravel_mysql
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}

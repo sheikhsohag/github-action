@@ -51,6 +51,11 @@ jobs:
       - name: Pull latest image
         run: docker pull $IMAGE_NAME:latest
 
+      - name: Run Laravel Migrations
+        run: |
+          docker exec -i laravel_app php artisan migrate --force
+
+
       # ৩. কন্টেইনার চালানো
       - name: Start Production Containers
         run: |

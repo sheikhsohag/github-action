@@ -13,14 +13,12 @@ RUN composer install \
     --no-interaction \
     --optimize-autoloader
 
-
 ############################################
 # Stage 2: PHP-FPM Runtime
 ############################################
 FROM php:8.4-fpm-alpine
 
 # Install system dependencies
-# Note: mysql-client in Alpine is often part of mariadb-client
 RUN apk add --no-cache \
     bash \
     git \
@@ -47,7 +45,6 @@ RUN apk add --no-cache \
     && apk del $PHPIZE_DEPS \
     && rm -rf /tmp/*
 
-
 # Set working directory
 WORKDIR /var/www
 
@@ -57,11 +54,11 @@ COPY . .
 # Copy vendor from builder stage
 COPY --from=vendor /app/vendor ./vendor
 
-# Set permissions for Laravel
-# We do this as root before switching to www-data
-RUN chown -R www-data:www-data /var/www \
+# 🔹 Set permissions only for folders Laravel needs to write
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
+# Switch to www-data user
 USER www-data
 
 EXPOSE 9000

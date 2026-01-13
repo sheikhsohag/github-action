@@ -11,7 +11,7 @@ services:
       - ./:/var/www
     environment:
       MYSQL_DATABASE: laravel
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: rootqe
       MYSQL_USER: laravel
       MYSQL_PASSWORD: laravel
 

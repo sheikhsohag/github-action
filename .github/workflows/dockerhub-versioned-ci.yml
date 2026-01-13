@@ -42,26 +42,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ১. এনভায়রনমেন্ট ফাইল তৈরি করা (Secrets থেকে)
       - name: Create .env file
         run: |
           echo "${{ secrets.PROD_ENV_FILE }}" > .env
 
-      # ২. লেটেস্ট ইমেজ পুল করা
       - name: Pull latest image
         run: docker pull $IMAGE_NAME:latest
 
-      - name: Run Laravel Migrations
-        run: |
-          docker exec -i laravel_app php artisan migrate --force
-
-
-      # ৩. কন্টেইনার চালানো
       - name: Start Production Containers
         run: |
-          # --env-file .env ফ্ল্যাগটি নিশ্চিত করে যে ভেরিয়েবলগুলো পাওয়া যাচ্ছে
+          # কন্টেইনার আগে স্টার্ট করতে হবে যাতে পরবর্তীতে exec কমান্ড কাজ করে
           docker compose -f docker-compose.prod.yml --env-file .env up -d
 
-      # ৪. ক্লিনআপ
+      - name: Set Permissions
+        run: |
+          # কন্টেইনার স্টার্ট হওয়ার পর রুট ইউজার দিয়ে পারমিশন ঠিক করা
+          docker exec -u root laravel_app chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+          docker exec -u root laravel_app chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+      - name: Run Laravel Migrations
+        run: |
+          docker exec laravel_app php artisan migrate --force
+
+      - name: Clear View Cache
+        run: |
+          # পারমিশন এরর এড়াতে ভিউ ক্যাশ ক্লিয়ার করে দেওয়া ভালো
+          docker exec laravel_app php artisan view:clear
+
       - name: Cleanup Old Images
         run: docker image prune -f

@@ -10,8 +10,9 @@ services:
       - .env
     volumes:
       - ./storage:/var/www/storage
-      # প্রোডাকশনে না থাকলে নিচের লাইনটি কোড সিঙ্ক করার জন্য যোগ করতে পারেন
-      # - .:/var/www
+      - .:/var/www
+      - ./public:/var/www/public
+
     depends_on:
       mysql:
         condition: service_healthy

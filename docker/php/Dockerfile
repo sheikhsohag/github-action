@@ -58,9 +58,6 @@ COPY --from=vendor /app/vendor ./vendor
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-RUN chown -R www-data:www-data /var/www \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
-
 # Switch to www-data user
 USER www-data
 

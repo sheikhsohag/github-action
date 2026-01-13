@@ -60,6 +60,7 @@ services:
     restart: unless-stopped
     networks:
       - laravel
+
   adminer:
     image: adminer
     container_name: laravel_adminer

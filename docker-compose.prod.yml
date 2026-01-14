@@ -9,7 +9,6 @@ services:
     env_file:
       - .env
     volumes:
-    volumes:
       - ./storage:/var/www/storage
       # Mount specific directories, not everything
       - ./app:/var/www/app

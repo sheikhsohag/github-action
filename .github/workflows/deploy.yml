@@ -18,10 +18,15 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}         # e.g., 18.140.63.43
           username: ubuntu                       # your EC2 username
-          key: ${{ secrets.SH_PRIVATE_KEY }}       # paste user-list.pem content here in GitHub Secrets
+          key: ${{ secrets.SH_PRIVATE_KEY }}    # paste user-list.pem content in GitHub Secrets
           port: 22
           script: |
+            set -eux
+
+            # Navigate to project directory
             cd /var/www/myproject/github-action
+
+            # Sync latest code
             git remote set-url origin git@github.com:sheikhsohag/github-action.git
             git fetch --all
             git reset --hard origin/master
@@ -30,16 +35,18 @@ jobs:
             sudo chown -R ubuntu:www-data .
             sudo chmod -R 775 storage bootstrap/cache
 
-            # Fresh composer install
+            # Remove old vendor and install dependencies safely
             rm -rf vendor
-            composer install --no-dev --optimize-autoloader --prefer-dist --ignore-platform-reqs
+            php -d memory_limit=-1 $(which composer) install --no-dev --optimize-autoloader --prefer-dist --ignore-platform-reqs -n --no-interaction
 
+            # Run migrations & cache
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
             php artisan cache:clear
 
-            # Reload correct PHP-FPM
+            # Reload PHP-FPM
             sudo systemctl reload php8.2-fpm
 
+            echo "✅ Deployment finished successfully"

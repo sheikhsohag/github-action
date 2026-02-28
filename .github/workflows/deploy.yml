@@ -25,10 +25,21 @@ jobs:
             git remote set-url origin git@github.com:sheikhsohag/github-action.git
             git fetch --all
             git reset --hard origin/master
-            composer install --no-dev --optimize-autoloader
+
+            # Fix permissions
+            sudo chown -R ubuntu:www-data .
+            sudo chmod -R 775 storage bootstrap/cache
+
+            # Fresh composer install
+            rm -rf vendor
+            composer install --no-dev --optimize-autoloader --prefer-dist --ignore-platform-reqs
+
             php artisan migrate --force
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
             php artisan cache:clear
-            sudo systemctl reload php8.1-fpm   # reload PHP-FPM for Nginx
+
+            # Reload correct PHP-FPM
+            sudo systemctl reload php8.2-fpm
+

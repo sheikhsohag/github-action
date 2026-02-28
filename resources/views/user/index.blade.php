@@ -10,7 +10,7 @@
 </head>
 <body>
 
-<h2>Add New User</h2>
+<h2>Add New User(for servy)</h2>
 
 @if(session('success'))
     <p style="color:green">{{ session('success') }}</p>

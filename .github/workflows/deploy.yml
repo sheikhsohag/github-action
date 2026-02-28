@@ -16,12 +16,15 @@ jobs:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.10
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.EC2_HOST }}         # e.g., 18.140.63.43
+          username: ubuntu                       # your EC2 username
+          key: ${{ secrets.SH_PRIVATE_KEY }}       # paste user-list.pem content here in GitHub Secrets
+          port: 22
           script: |
             cd /var/www/myproject/github-action
-            git pull origin master
+            git remote set-url origin git@github.com:sheikhsohag/github-action.git
+            git fetch --all
+            git reset --hard origin/master
             composer install --no-dev --optimize-autoloader
             php artisan migrate --force
             php artisan config:cache

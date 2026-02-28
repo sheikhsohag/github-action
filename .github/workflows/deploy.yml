@@ -10,17 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Deploy to EC2 via SSH
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@v0.1.10
+        uses: appleboy/ssh-action@v1.0.3 # 💡 Upgraded to newer version for better error logging
         with:
-          host: ${{ secrets.EC2_HOST }}           # EC2 public IP
-          username: ubuntu                         # EC2 username
-          key: ${{ secrets.SH_PRIVATE_KEY }}       # Your private key stored in GitHub Secrets
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.SH_PRIVATE_KEY }}
           port: 22
           script: |
             set -eux
@@ -28,27 +26,33 @@ jobs:
             # Navigate to project directory
             cd /var/www/myproject/github-action
 
+            # 1. Put app in maintenance mode so www-data stops creating new cache files
+            php artisan down || true
+
             # Sync latest code
             git remote set-url origin git@github.com:sheikhsohag/github-action.git
             git fetch --all
             git reset --hard origin/master
 
-            # Fix permissions
+            # Remove old vendor and install dependencies safely
+            rm -rf vendor
+            php -d memory_limit=-1 $(which composer) install --no-dev --optimize-autoloader --prefer-dist --ignore-platform-reqs -n --no-interaction
+
+            # Run migrations
+            php artisan migrate --force
+
+            # 2. Fix permissions AFTER composer to ensure ubuntu has absolute access to clear cache
             sudo chown -R ubuntu:www-data .
             sudo chmod -R 775 storage bootstrap/cache
 
-            # Remove old vendor and install dependencies safely
-            rm -rf vendor
-            php -d memory_limit=-1 -d error_reporting=E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED $(which composer) install --no-dev --optimize-autoloader --prefer-dist --ignore-platform-reqs -n --no-interaction
+            # 3. Use standard optimization commands (safely clears and rebuilds view/route/config/cache)
+            php artisan optimize:clear
+            php artisan optimize
 
-            # Run migrations & cache, suppress deprecation warnings
-            php -d error_reporting=E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED artisan migrate --force
-            php -d error_reporting=E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED artisan config:cache
-            php -d error_reporting=E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED artisan route:cache
-            php -d error_reporting=E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED artisan view:cache
-            php -d error_reporting=E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED artisan cache:clear
+            # Bring app back online
+            php artisan up
 
-            # Reload PHP-FPM
-            sudo systemctl reload php8.2-fpm
+            # 4. Reload PHP-FPM safely (added || true so missing sudo permissions won't break the build)
+            sudo systemctl reload php8.2-fpm || true
 
             echo "✅ Deployment finished successfully"

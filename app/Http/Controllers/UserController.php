@@ -16,17 +16,28 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        // dd($request->all());
         $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => 'required|email|unique:users,email',
-            'password' => 'required|min:6'
+            'password' => 'required|min:6',
+            'image'    => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        User::create([
+        $data = [
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
-        ]);
+        ];
+
+        if($request->hasFile('image')){
+            $image = $request->file('image');
+            $imageName = time() . '.' . $image->getClientOriginalName();
+            $imagePath = $image->storeas('users', $imageName, 'public');
+            $data['image'] = $imagePath;
+        }
+
+        User::create($data);
 
         return redirect()->route('users.index')->with('success', 'User added successfully');
     }

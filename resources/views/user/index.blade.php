@@ -58,6 +58,12 @@
             display:none;
         }
 
+        .error{
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
     </style>
 
 </head>
@@ -69,6 +75,16 @@
     <p style="color:green">{{ session('success') }}</p>
 @endif
 
+@if($errors->any())
+    <div style="color:red; margin-bottom:20px;">
+        <ul>
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <form action="{{ route('users.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
 
@@ -76,10 +92,10 @@
 
         <div class="left">
             <label>Name</label><br>
-            <input type="text" name="name" required><br><br>
+            <input type="text" name="name" value="{{ old('name') }}" required><br><br>
 
             <label>Email</label><br>
-            <input type="email" name="email" required><br><br>
+            <input type="email" name="email" value="{{ old('email') }}" required><br><br>
 
             <label>Password</label><br>
             <input type="password" name="password" required><br><br>
@@ -131,7 +147,12 @@
 
                 <td>
                     @if($user->image)
-                        <img src="{{ asset('storage/'.$user->image) }}" class="user-img">
+                        {{-- ✅ S3 থেকে ইমেজ দেখানো --}}
+                        <img src="{{ Storage::disk('s3')->url($user->image) }}"
+                             class="user-img"
+                             alt="{{ $user->name }}">
+                    @else
+                        <span style="color:#999;">No image</span>
                     @endif
                 </td>
 
@@ -146,7 +167,6 @@
         @endforelse
     </tbody>
 </table>
-
 
 <script>
 function previewImage(event){

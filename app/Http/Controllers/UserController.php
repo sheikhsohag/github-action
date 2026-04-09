@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -30,12 +31,22 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ];
 
-        if($request->hasFile('image')){
+        if ($request->hasFile('image')) {
+
             $image = $request->file('image');
-            $imageName = time() . '.' . $image->getClientOriginalName();
-            $imagePath = $image->storeas('users', $imageName, 'public');
+
+            $imageName = time().'.'. $image->getClientOriginalExtension();
+
+            $imagePath = Storage::disk('s3')->putFileAs(
+                'myproject/users',
+                $image,
+                $imageName
+            );
+
             $data['image'] = $imagePath;
         }
+
+        // Controller এ ফাইল আপলোড করার সময়
 
         User::create($data);
 

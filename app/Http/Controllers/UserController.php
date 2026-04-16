@@ -15,6 +15,11 @@ class UserController extends Controller
         return view('user.index', compact('users'));
     }
 
+    public function show(User $user)
+    {
+        return view('user.user', compact('user'));
+    }
+
     public function store(Request $request)
     {
         // dd($request->all());

@@ -138,6 +138,7 @@
             <th>Name</th>
             <th>Email</th>
             <th>Created At</th>
+            <th>Action</th>
         </tr>
     </thead>
     <tbody>
@@ -159,10 +160,13 @@
                 <td>{{ $user->name }}</td>
                 <td>{{ $user->email }}</td>
                 <td>{{ $user->created_at?->format('d M Y') }}</td>
+                <td>
+                    <a href="{{ route('users.show', $user) }}">Show</a>
+                </td>
             </tr>
         @empty
             <tr>
-                <td colspan="5">No users found</td>
+                <td colspan="6">No users found</td>
             </tr>
         @endforelse
     </tbody>

@@ -4,6 +4,7 @@
     <title>User List</title>
 
     <style>
+        body { margin: 0; padding: 0; }
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid #ddd; padding: 8px; }
         th { background: #f2f2f2; }
@@ -69,6 +70,9 @@
 </head>
 <body>
 
+@include('partials.topbar')
+
+<div style="padding: 20px;">
 <h2>Add New User</h2>
 
 @if(session('success'))
@@ -191,6 +195,6 @@ function previewImage(event){
     }
 }
 </script>
-
+</div>
 </body>
 </html>

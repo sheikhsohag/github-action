@@ -7,6 +7,7 @@
     <title>Document</title>
 </head>
 <body>
+    @include('partials.topbar')
     <h1>Welcome to My Custom Website</h1>
     <p>This is a custom Laravel Blade template.</p>
     <p>this is tesh for <strong>testing</strong></p>

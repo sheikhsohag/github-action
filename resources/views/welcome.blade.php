@@ -13,7 +13,7 @@
 </head>
 <body>
     @include('partials.topbar')
-    <div style="padding: 20px;">
+    <div>
     <h1>🏠 Home Page</h1>
     <p>This is Blade based Home Page</p>
     </div>

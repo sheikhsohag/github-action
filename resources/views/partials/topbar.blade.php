@@ -55,19 +55,32 @@
     }
 
     .notification-dropdown {
+        --dropdown-width: 300px;
+        --dropdown-max-height: 400px;
+        --dropdown-font-size: 13px;
         display: none;
         position: absolute;
         right: 0;
         top: 100%;
         background-color: #fff;
         color: #333;
-        min-width: 300px;
-        max-height: 400px;
-        overflow-y: auto;
+        min-width: 200px;
+        max-width: 600px;
+        width: var(--dropdown-width);
+        min-height: 150px;
+        max-height: var(--dropdown-max-height);
+        overflow: auto;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         border-radius: 8px;
         margin-top: 10px;
         z-index: 1000;
+        font-size: var(--dropdown-font-size);
+        resize: both;
+    }
+
+    .notification-dropdown::-webkit-resizer {
+        background: linear-gradient(135deg, transparent 50%, #999 50%, #999 60%, transparent 60%, transparent 70%, #999 70%, #999 80%, transparent 80%);
+        border-radius: 0 0 8px 0;
     }
 
     .notification-dropdown.show {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Notifications\UserNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -40,7 +41,7 @@ class UserController extends Controller
 
             $image = $request->file('image');
 
-            $imageName = time().'.'. $image->getClientOriginalExtension();
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
 
             $imagePath = Storage::disk('s3')->putFileAs(
                 'myproject/users',
@@ -53,7 +54,9 @@ class UserController extends Controller
 
         // Controller এ ফাইল আপলোড করার সময়
 
-        User::create($data);
+        $user = User::create($data);
+
+        $user->notify(new UserNotification($user));
 
         return redirect()->route('users.index')->with('success', 'User added successfully');
     }

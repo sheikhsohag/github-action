@@ -44,12 +44,13 @@
         position: absolute;
         top: -5px;
         right: -5px;
-        background-color: #e74c3c;
-        color: #fff;
+        background-color: #fdfbfb;
+        color: green;
         border-radius: 50%;
-        padding: 2px 6px;
+        padding: 2px 3px;
         font-size: 10px;
-        min-width: 16px;
+        width: 16px;
+        height: 16px;
         text-align: center;
         line-height: 1.2;
     }
@@ -144,7 +145,7 @@
         <div class="notification-wrapper">
             <button class="notification-icon" id="notificationBtn" title="Notifications">
                 &#128276;
-                <span class="notification-badge" id="notificationCount">5</span>
+                <span class="notification-badge" id="notificationCount">6</span>
             </button>
             <div class="notification-dropdown" id="notificationDropdown">
                 <div class="notification-dropdown-header">Notifications</div>

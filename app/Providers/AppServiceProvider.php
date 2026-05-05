@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\NotificationBroadcastEvent;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +21,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        DatabaseNotification::created(function ($notification) {
+            event(new NotificationBroadcastEvent($notification));
+        });
     }
 }
